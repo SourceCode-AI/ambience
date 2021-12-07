@@ -1,0 +1,60 @@
+{% extends "template.html" %}
+{% set active_page = "index" %}
+
+{% block container %}
+<div class="row m-2">
+  <div class="col-lg-9">
+    <div class="row">
+      <div class="col-md-12">
+        <h2>Welcome to Ambiance!</h2>
+        <p>
+          Ambiance is a server for aggregating, searching and auditing the results from scans produced by the Aura project.
+        </p>
+      </div>
+
+      {% for stat, label in stat_cards %}
+      <div class="col-md-4 mt-1">
+        <div class="card">
+          <div class="card-body text-center"><h1>{{ stat }}</h1></div>
+          <div class="card-footer text-center">{{ label }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="row mt-2">
+      <div class="col-md-12">
+        <div class="card">
+          <div class="card-header"><h3>Most suspicious packages</h3></div>
+          <div class="list-group list-group-flush">
+            {% for scan_id, name, score in suspicious_pkgs %}
+            <a class="list-group-item list-group-item-action" href="{{ url_for("scan.show_scan", scan_id=scan_id) }}" target="_blank">
+              #{{ loop.index }} - <b>{{ name }}</b>
+              <span class="badge bg-danger rounded-pill align-right">Score: {{ score }}</span>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-3">
+    <div class="card">
+      <div class="card-header">
+        Latest scans
+      </div>
+
+      <div class="card-body d-grid gap-2">
+          {% for scan in last_scans %}
+            <a class="btn btn-outline-primary btn-sm text-left" href="{{ url_for("scan.show_scan", scan_id=scan["id"]) }}" target="_blank">
+              <i class="fa fa-scroll"></i>
+              {{ scan.name }}
+            </a>
+          {% endfor %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

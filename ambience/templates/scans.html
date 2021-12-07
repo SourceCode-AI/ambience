@@ -1,0 +1,27 @@
+{% extends "template.html" %}
+{% set active_page = "list_scans" %}
+
+{% block container %}
+<div class="row m-2">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        Latest scans
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for scan in last_scans %}
+        <li class="list-group-item list-group-item-action">
+          <span class="badge bg-secondary">
+            {{ scan.created.replace(microsecond=0) }}
+          </span>
+          Scan "{{ scan.name }}"
+          <a class="btn btn-primary float-end" href="{{ url_for("scan.show_scan", scan_id=scan["id"]) }}" target="_blank">
+            Open full scan report <i class="fa fa-scroll"></i>
+          </a>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

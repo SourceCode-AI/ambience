@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "ambience"
+version = "0.1.0"
+description = "Ambience is an API server and results browser for the Aura Security project"
+authors = ["Martin Carnogursky <admin@sourcecode.ai>"]
+license = "GPL-3.0-or-later"
+
+packages = [
+    { include = "ambience" }
+]
+
+
+[tool.poetry.dependencies]
+python = "^3.8 || ^3.9"
+aura-security = "~2.2"
+"ruamel.yaml" = "~0.17"
+psycopg2 = "~2.9"
+Flask = "~2.0"
+
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

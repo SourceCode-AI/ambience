@@ -1,0 +1,123 @@
+{% extends "template.html" %}
+
+{% block container %}
+  <div class="row align-items-center">
+    <div class="col-lg-8 offset-lg-2 text-center">
+      <h1>
+        {{ package_name }}
+        <span class="text-muted">{{ release }}</span>
+      </h1>
+    </div>
+
+    <div class="col-lg-2 text-end">
+      {% if release == latest %}
+        <span class="badge bg-success small">
+          <i class="fa fa-check"></i>
+          Latest version
+        </span>
+      {% else %}
+        <span class="badge bg-danger small">
+          <i class="fa fa-exclamation-triangle"></i>
+          Outdated version
+        </span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-md-3">
+      <div class="card">
+        <div class="card-header">
+          Versions
+        </div>
+        <div class="list-group list-group-flush align-items-center">
+          {% for version in releases %}
+          <a class="list-group-item list-group-item-action {% if release==version %}active{% endif %}" href="{{ url_for("pypi.view_package", pkg_name=package_name, release=version) }}">
+            {{ version }}
+
+            {% if version in release_scores %}
+              <span class="badge bg-secondary">Score: {{ release_scores[version] }}</span>
+            {% endif %}
+
+            {% if version == latest %}
+            <span class="badge bg-success"><i class="fa fa-check"></i> Latest</span>
+            {% endif %}
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-9">
+      <div class="row">
+        {% for published_pkg in pkg.info["releases"][release] %}
+        {% set scan = scans.get(published_pkg["filename"]) %}
+        <div class="col-md-12">
+          <div class="card mt-1 shadow">
+            <div class="card-header">
+              <b class="text-end">
+                {{ published_pkg["filename"] }}
+              </b>
+              {% if scan %}
+              <span class="badge bg-secondary float-end">
+                Score: {{ scan.data.score }}
+              </span>
+              {% endif %}
+            </div>
+
+            <div class="card-body">
+              {% if not scan %}
+              <div class="alert alert-primary text-center">
+                <h3><i class="fa fa-clock"></i> We have not scanned this package yet</h3>
+              </div>
+              {% else %}
+                <div class="row">
+                  <div class="col-md-12">
+                    <div class="card">
+                      <div class="card-header">Behavioral analysis</div>
+                      <div class="list-group list-group-flush">
+                        {% for ba in scan["metadata"]["behavioral_analysis"].values() %}
+                          <div class="list-group-item">
+                            <div class="d-flex w-100 justify-content-between"><h5>{{ ba.name }}</h5></div>
+                            <p class="mb-1">{{ ba.description }}</p>
+                          </div>
+                        {% endfor %}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="list-group list-group-flush">
+              {% if scan %}
+                <div class="list-group-item">
+                  Tags:
+                  {% for tag in scan["data"]["tags"] %}
+                    <span class="badge bg-secondary">{{ tag }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              <div class="list-group-item">
+                MD5: {{ published_pkg["digests"]["md5"] }}
+              </div>
+              <div class="list-group-item">
+                <a class="btn btn-secondary btn-sm" href="{{ published_pkg["url"] }}" target="_blank">
+                  <i class="fa fa-download"></i> Download package
+                </a>
+                {% if scan %}
+                  <a class="btn btn-primary btn-sm" href="{{ url_for("scan.show_scan", scan_id=scan["scan_id"]) }}" target="_blank">
+                    <i class="fa fa-scroll"></i>
+                    Open scan report
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
