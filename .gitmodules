@@ -1,0 +1,4 @@
+[submodule "aura"]
+	path = aura
+	url = git@github.com:SourceCode-AI/aura.git
+	branch = ambience

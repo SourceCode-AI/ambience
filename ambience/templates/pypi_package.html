@@ -23,101 +23,182 @@
       {% endif %}
     </div>
   </div>
+
   <div class="row">
-    <div class="col-md-3">
-      <div class="card">
-        <div class="card-header">
-          Versions
-        </div>
-        <div class="list-group list-group-flush align-items-center">
-          {% for version in releases %}
-          <a class="list-group-item list-group-item-action {% if release==version %}active{% endif %}" href="{{ url_for("pypi.view_package", pkg_name=package_name, release=version) }}">
-            {{ version }}
-
-            {% if version in release_scores %}
-              <span class="badge bg-secondary">Score: {{ release_scores[version] }}</span>
-            {% endif %}
-
-            {% if version == latest %}
-            <span class="badge bg-success"><i class="fa fa-check"></i> Latest</span>
-            {% endif %}
-          </a>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-
-    <div class="col-md-9">
-      <div class="row">
-        {% for published_pkg in pkg.info["releases"][release] %}
-        {% set scan = scans.get(published_pkg["filename"]) %}
-        <div class="col-md-12">
-          <div class="card mt-1 shadow">
-            <div class="card-header">
-              <b class="text-end">
-                {{ published_pkg["filename"] }}
-              </b>
-              {% if scan %}
-              <span class="badge bg-secondary float-end">
-                Score: {{ scan.data.score }}
-              </span>
-              {% endif %}
-            </div>
-
-            <div class="card-body">
-              {% if not scan %}
-              <div class="alert alert-primary text-center">
-                <h3><i class="fa fa-clock"></i> We have not scanned this package yet</h3>
+    <div class="col-lg-12">
+      <tab-container :active_tab="'{{ active_tab }}'">
+        <tab-content :title="'Overview'">
+          <div class="row">
+            {% if release != latest %}
+            <div class="col-md-12">
+              <div class="alert alert-warning text-center">
+                <i class="fa fa-exclamation-triangle"></i>
+                Data displayed here is valid only for the latest version
               </div>
-              {% else %}
-                <div class="row">
-                  <div class="col-md-12">
-                    <div class="card">
-                      <div class="card-header">Behavioral analysis</div>
-                      <div class="list-group list-group-flush">
-                        {% for ba in scan["metadata"]["behavioral_analysis"].values() %}
-                          <div class="list-group-item">
-                            <div class="d-flex w-100 justify-content-between"><h5>{{ ba.name }}</h5></div>
-                            <p class="mb-1">{{ ba.description }}</p>
-                          </div>
-                        {% endfor %}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              {% endif %}
             </div>
+            {% endif %}
 
-            <div class="list-group list-group-flush">
-              {% if scan %}
-                <div class="list-group-item">
-                  Tags:
-                  {% for tag in scan["data"]["tags"] %}
-                    <span class="badge bg-secondary">{{ tag }}</span>
+            <div class="col-md-6">
+              <div class="card">
+                <div class="card-header">
+                  Scoring matrix
+                  <span class="badge bg-success float-end">
+                    Total score: {{ total_score }}
+                  </span>
+                </div>
+                <div class="list-group list-group-flush align-items-center">
+                  {% for entry in score_matrix.get_score_entries() %}
+                    <div class="list-group-item list-group-item-action">
+                      <b>{{ entry.label }}</b>
+                      <span class="badge bg-secondary float-end">{{ entry.explanation }}</span>
+                    </div>
                   {% endfor %}
                 </div>
-              {% endif %}
-              <div class="list-group-item">
-                MD5: {{ published_pkg["digests"]["md5"] }}
               </div>
-              <div class="list-group-item">
-                <a class="btn btn-secondary btn-sm" href="{{ published_pkg["url"] }}" target="_blank">
-                  <i class="fa fa-download"></i> Download package
-                </a>
-                {% if scan %}
-                  <a class="btn btn-primary btn-sm" href="{{ url_for("scan.show_scan", scan_id=scan["scan_id"]) }}" target="_blank">
-                    <i class="fa fa-scroll"></i>
-                    Open scan report
+            </div>
+          </div>
+        </tab-content>
+
+        <tab-content :title="'Audit'">
+          <div class="row">
+            <div class="col-md-3">
+              <div class="card">
+                <div class="card-header">
+                  Versions
+                </div>
+                <div class="list-group list-group-flush align-items-center">
+                  {% for version in releases %}
+                  <a class="list-group-item list-group-item-action {% if release==version %}active{% endif %}" href="{{ url_for("pypi.view_package", pkg_name=package_name, release=version) }}?active_tab=Audit">
+                    {{ version }}
+
+                    {% if version in release_scores %}
+                      <span class="badge bg-secondary">Score: {{ release_scores[version] }}</span>
+                    {% endif %}
+
+                    {% if version == latest %}
+                    <span class="badge bg-success"><i class="fa fa-check"></i> Latest</span>
+                    {% endif %}
                   </a>
-                {% endif %}
+                  {% endfor %}
+                </div>
               </div>
             </div>
 
+            <div class="col-md-9">
+              <div class="row">
+                {% for published_pkg in pkg.info["releases"][release] %}
+                {% set scan = scans.get(published_pkg["filename"]) %}
+                <div class="col-md-12">
+                  <div class="card mt-1 shadow">
+                    <div class="card-header">
+                      <b class="text-end">
+                        {{ published_pkg["filename"] }}
+                      </b>
+                      {% if scan %}
+                      <span class="badge bg-secondary float-end">
+                        Score: {{ scan.data.score }}
+                      </span>
+                      {% endif %}
+                    </div>
+
+                    <div class="card-body">
+                      {% if not scan %}
+                      <div class="alert alert-primary text-center">
+                        <h3><i class="fa fa-clock"></i> We have not scanned this package yet</h3>
+                      </div>
+                      {% else %}
+                        <div class="row">
+                          <div class="col-md-12">
+                            <div class="card">
+                              <div class="card-header">Behavioral analysis</div>
+                              <div class="list-group list-group-flush">
+                                {% for ba in scan["metadata"]["behavioral_analysis"].values() %}
+                                  <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between"><h5>{{ ba.name }}</h5></div>
+                                    <p class="mb-1">{{ ba.description }}</p>
+                                  </div>
+                                {% endfor %}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      {% endif %}
+                    </div>
+
+                    <div class="list-group list-group-flush">
+                      {% if scan %}
+                        <div class="list-group-item">
+                          Tags:
+                          {% for tag in scan["data"]["tags"] %}
+                            <span class="badge bg-secondary">{{ tag }}</span>
+                          {% endfor %}
+                        </div>
+                      {% endif %}
+                      <div class="list-group-item">
+                        MD5: {{ published_pkg["digests"]["md5"] }}
+                      </div>
+                      <div class="list-group-item">
+                        <a class="btn btn-secondary btn-sm" href="{{ published_pkg["url"] }}" target="_blank">
+                          <i class="fa fa-download"></i> Download package
+                        </a>
+                        {% if scan %}
+                          <a class="btn btn-primary btn-sm" href="{{ url_for("scan.show_scan", scan_id=scan["scan_id"]) }}" target="_blank">
+                            <i class="fa fa-scroll"></i>
+                            Open scan report
+                          </a>
+                        {% endif %}
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
           </div>
-        </div>
-        {% endfor %}
-      </div>
+        </tab-content>
+
+        <tab-content :title="'Dependencies'">
+          <div class="row mt-2">
+            <div class="col-lg-6">
+              <div class="card">
+                {% set deps=pkg.get_dependencies() %}
+                <div class="card-header">
+                  <span class="badge bg-secondary">{{ deps|length }}</span>
+                  Dependencies
+                </div>
+                <div class="list-group list-group-flush align-items-center">
+                  {% for dep in deps %}
+                  <a class="list-group-item list-group-item-action" href="{{ url_for("pypi.view_package", pkg_name=dep.name) }}" target="_blank">
+                    {{ dep.name }}
+                  </a>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="card">
+                <div class="card-header">
+                  <span class="badge bg-secondary">{{ reverse_dependencies|length }}</span>
+                  Reverse Dependencies
+                </div>
+                <div class="list-group list-group-flush align-items-center">
+                  {% for dep in reverse_dependencies %}
+                  <a class="list-group-item list-group-item-action" href="{{ url_for("pypi.view_package", pkg_name=dep) }}" target="_blank">
+                    {{ dep }}
+                  </a>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+        </tab-content>
+
+      </tab-container>
     </div>
   </div>
+
+
+
 
 {% endblock %}

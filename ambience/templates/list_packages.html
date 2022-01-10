@@ -1,0 +1,38 @@
+{% extends "template.html" %}
+
+{% set active_page = "list_packages" %}
+
+{% block container %}
+<div class="row">
+  <div class="col-lg-12">
+    <package-browser></package-browser>
+
+    <!--tab-container :active_tab="'Filter'">
+      <tab-content :title="'Most popular'">
+        Tab 1 content
+      </tab-content>
+      <tab-content :title="'Most suspicious'">
+        Tab 2 content
+      </tab-content>
+      <tab-content :title="'Filter'">
+        <div class="row">
+          <div class="col-md-3">
+            <div class="card">
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-sm-12">
+                    <div class="card">
+                      <div class="card-header">Tags</div>
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </tab-content>
+    </tab-container-->
+  </div>
+</div>
+{% endblock %}

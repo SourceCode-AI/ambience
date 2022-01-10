@@ -20,8 +20,6 @@ def find_configuration() -> Path:
         return pth
 
 
-
-
 def load_configuration():
     global CFG, CFG_PATH
 
@@ -30,7 +28,7 @@ def load_configuration():
 
 
 def get_db():
-    return psycopg2.connect(**CFG["postgres"])
+    return psycopg2.connect(CFG["postgres"])
 
 
 load_configuration()

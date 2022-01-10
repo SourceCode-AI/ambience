@@ -3,6 +3,7 @@ import time
 import string
 import xmlrpc.client
 
+import sqlalchemy as sa
 from psycopg2.errors import SyntaxError
 
 from .. import config
@@ -32,7 +33,7 @@ def search_detections_api():
                 FROM detections
                 INNER JOIN scans ON scans.id=detections.scan_id
                 WHERE idx_vector @@ to_tsquery('english', %s)
-                ORDER BY score DESC
+                ORDER BY detections.score DESC
                 LIMIT 250;
             """, (query,))
 
@@ -93,6 +94,28 @@ def search_packages_api():  # FIXME: xmlrpc is not working and disabled on pypi
     results = list(repo.search({"name": query}))
 
     return {"packages": results}
+
+
+@bp.route("/api/v1.0/search/md5", methods=["GET", "POST"])
+def search_md5_api():
+    query = normalize_query(flask.request.args["q"])
+    results = []
+
+    rows = flask.g.db_session.execute(sa.text("""
+    SELECT id, scan_id, name
+    FROM locations
+    WHERE (metadata->>'md5') = :md5
+    """), {"md5": query}).all()
+
+    for row in rows:
+        results.append({
+            "type": "location",
+            "id": row[0],
+            "scan_id": row[1],
+            "label": row[2]
+        })
+
+    return {"results": results, "count": len(results)}
 
 
 def normalize_query(query: str) -> str:

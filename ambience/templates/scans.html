@@ -16,7 +16,8 @@
           </span>
           Scan "{{ scan.name }}"
           <a class="btn btn-primary float-end" href="{{ url_for("scan.show_scan", scan_id=scan["id"]) }}" target="_blank">
-            Open full scan report <i class="fa fa-scroll"></i>
+            <i class="fa fa-file-medical-alt"></i>
+            Open full scan report
           </a>
         </li>
         {% endfor %}

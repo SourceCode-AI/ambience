@@ -12,10 +12,14 @@ packages = [
 
 [tool.poetry.dependencies]
 python = "^3.8 || ^3.9"
-aura-security = "~2.2"
+#aura-security = "~2.2"
 "ruamel.yaml" = "~0.17"
 psycopg2 = "~2.9"
 Flask = "~2.0"
+graphene = "~2.1"
+Flask-GraphQL = "~2.0"
+SQLAlchemy = "~1.4"
+graphene_sqlalchemy = "~2.3.0"
 
 
 [tool.poetry.dev-dependencies]
