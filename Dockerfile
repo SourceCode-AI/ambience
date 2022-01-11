@@ -4,7 +4,7 @@ FROM aura-full
 RUN apk add --no-cache musl-dev linux-headers
 
 RUN mkdir "/ambience-server"
-ADD poetry.lock pyproject.toml start_server.sh /ambience-server/
+ADD poetry.lock pyproject.toml start_server.sh uwsgi.ini /ambience-server/
 ADD ambience /ambience-server/ambience
 
 WORKDIR /ambience-server

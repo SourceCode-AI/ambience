@@ -1,19 +1,20 @@
 from importlib import resources
 from dataclasses import dataclass
+import secrets
 import time
 import typing as t
 
 import flask
 from flask_graphql import GraphQLView
 import sqlalchemy as sa
-from sqlalchemy.orm import scoped_session, sessionmaker
 
 from aura.config import get_logger
 from aura.output import postgres as sql
 
-from .models import scan, search, pypi
+from .models import scan, search, pypi, sql as sql_models
 from .models.graphql.schema import schema as graphql_schema
 from . import api
+from . import auth
 from . import config
 
 
@@ -23,20 +24,19 @@ AURA_STATIC_WHITELIST = (
 )
 logger = get_logger(__name__)
 
-engine = sql.create_engine(config.CFG["postgres"])
-db_session = scoped_session(sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-))
+engine = sql.get_engine(config.CFG["postgres"])
+db_session = sql.get_session(engine)
 sql.Base.query = db_session.query_property()
 
 
 app = flask.Flask(__name__)
+app.secret_key = config.CFG["flask_secret"]
+
 app.register_blueprint(scan.bp)
 app.register_blueprint(search.bp)
 app.register_blueprint(pypi.bp)
 app.register_blueprint(api.bp)
+app.register_blueprint(auth.bp)
 
 
 @dataclass
@@ -59,60 +59,7 @@ class MenuItem:
 
 @app.route("/")
 def home():
-    sus_pkgs_stmt = sa.text("""
-        SELECT * FROM (
-            SELECT DISTINCT ON (package) id, input, score, package
-            FROM scans
-            ORDER BY package, score DESC
-        ) AS subq
-        ORDER BY subq.score DESC
-        LIMIT :limit;
-    """)
-
-
-    suspicious_pkgs = []
-    for row in db_session.execute(sus_pkgs_stmt, {"limit": 10}):
-        suspicious_pkgs.append({
-            "id": row[0],
-            "name": row[1],
-            "score": row[2],
-            "package": row[3]
-        })
-
-
-    num_scans = db_session.query(sql.ScanModel).count()
-    num_queue = db_session.execute(sa.text("SELECT COUNT(*) FROM pending_scans WHERE status!=2")).first()[0]
-    num_detections = db_session.query(sql.DetectionModel).count()
-    num_files = db_session.query(
-        sa.func.sum(sa.cast(sql.ScanModel.metadata_col["files_processed"], sa.INTEGER))
-    ).first()[0] or 0
-    data_size = db_session.query(
-        sa.func.sum(sa.cast(sql.ScanModel.metadata_col["data_processed"], sa.INTEGER))
-    ).first()[0] or 0
-
-    num_data = f"{data_size} b"
-
-    for x in ("b", "Kb", "Mb", "Gb", "Tb", "Pb", "Eb"):
-        if data_size > 1024:
-            data_size /= 1024
-        else:
-            num_data = f"{data_size:.2f} {x}"
-            break
-
-    stat_cards = (
-        (num_scans, "Scans"),
-        (num_queue, "Scans in a queue"),
-        (num_detections, "Detections"),
-        (num_files, "Files scanned"),
-        (num_data, "Data processed")
-    )
-
-
-    return flask.render_template(
-        "home.html",
-        stat_cards=stat_cards,
-        suspicious_pkgs=suspicious_pkgs,
-    )
+    return flask.render_template("home.html")
 
 
 @app.route("/aura_static/<fname>")
@@ -143,6 +90,12 @@ def before_request():
     flask.g.engine = engine
     flask.g.db_session = db_session
 
+    if "user" in flask.session:
+        flask.g.user = db_session.query(sql_models.UserModel).filter_by(id=flask.session["user"]).first()
+    else:
+        flask.g.user = None
+
+
 
 @app.teardown_request
 def teardown_request(exception=None):
@@ -161,7 +114,6 @@ MENU_ITEMS = (
     MenuItem(endpoint="scan.list_scans", menu_id="list_scans", text="Browse scans", icon="fa-list-alt"),
     MenuItem(endpoint="search.search", menu_id="search", text="Search", icon="fa-search"),
     MenuItem(endpoint="pypi.list_packages", menu_id="list_packages", text="Pypi packages", icon="fa-boxes"),
-    MenuItem(endpoint="/graphql", menu_id="graphql", text="GraphQL API", icon="fa-project-diagram")
 )
 
 

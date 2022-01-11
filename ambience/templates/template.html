@@ -26,12 +26,46 @@
           </a>
         </li>
         {% endfor %}
+
+        {% if g.user %}
+          <li class="nav-item dropdown">
+            <a class="nav-link" href="#">
+              <i class="fa fa-user"></i>
+              {{ g.user.email }}
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarScrollingDropdown">
+              <li>
+                <a class="dropdown-item" href="#">Log-out</a>
+              </li>
+            </ul>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a class="nav-link" href="/login">
+              <i class="fa fa-sign-in-alt"></i>
+              Log-in
+            </a>
+          </li>
+        {% endif %}
       </ul>
+
       <span class="navbar-text">by SourceCode.AI</span>
     </div>
   </nav>
 
   <div class="container-fluid mt-2 pb-2" id="app">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="row">
+          {% for message in messages %}
+            <div class="col-sm-12">
+              <div class="alert alert-danger">{{ message }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
     {% block container %}
     {% endblock %}
   </div>

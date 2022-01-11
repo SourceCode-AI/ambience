@@ -62,9 +62,9 @@ class Query(ObjectType):
 
 
 
-@convert_sqlalchemy_type.register(sql.INTEGER)
-@convert_sqlalchemy_type.register(sql.BIGINT)
-@convert_sqlalchemy_type.register(sql.SMALLINT)
+@convert_sqlalchemy_type.register(sql.sa.INTEGER)
+@convert_sqlalchemy_type.register(sql.sa.BIGINT)
+@convert_sqlalchemy_type.register(sql.sa.SMALLINT)
 def convert_sql_id(type, column, registry=None):
     return Int
 

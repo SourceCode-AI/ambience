@@ -20,7 +20,7 @@ graphene = "~2.1"
 Flask-GraphQL = "~2.0"
 SQLAlchemy = "~1.4"
 graphene_sqlalchemy = "~2.3.0"
-
+uwsgi = "~2.0"
 
 [tool.poetry.dev-dependencies]
 

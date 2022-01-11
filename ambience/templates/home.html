@@ -11,37 +11,14 @@
           Ambience is a server for aggregating, searching and auditing the results from scans produced by the Aura project.
         </p>
       </div>
-
-      {% for stat, label in stat_cards %}
-      <div class="col-md-4 mt-1">
-        <div class="card">
-          <div class="card-body text-center"><h1>{{ stat }}</h1></div>
-          <div class="card-footer text-center">{{ label }}</div>
-        </div>
-      </div>
-      {% endfor %}
     </div>
+
+
+    <ambience-stats></ambience-stats>
 
     <div class="row mt-2">
       <div class="col-md-12">
-        <div class="card">
-          <div class="card-header">
-            <h3>
-              <i class="fa fa-box"></i>
-              Most suspicious packages
-            </h3>
-          </div>
-          <div class="list-group list-group-flush">
-            {% for impostor in suspicious_pkgs %}
-            <a class="list-group-item list-group-item-action" href="{{ url_for("scan.show_scan", scan_id=impostor.id) }}" target="_blank">
-              <i class="fa fa-trophy"></i>
-              #{{ loop.index }} - <b>{{ impostor.name }}</b>
-              <span class="badge bg-danger rounded-pill align-right">Score: {{ impostor.score }}</span>
-
-            </a>
-            {% endfor %}
-          </div>
-        </div>
+        <suspicious-packages></suspicious-packages>
       </div>
     </div>
   </div>

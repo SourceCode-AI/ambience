@@ -30,8 +30,8 @@ def filter_packages():
     filter_scans = False
 
     stmt = sa.select(sql.ScanModel).join(sql.ScanModel.tags)
-    stmt = stmt.options(load_only("id", "input", "scan_score", "metadata_col"))\
-            .where(sql.ScanModel.metadata_col["uri_scheme"] == sa.cast("pypi", JSONB))\
+    stmt = stmt.options(load_only("id", "input", "scan_score", "package", "package_release"))\
+            .where(sql.ScanModel.package != None)\
             .group_by(sql.ScanModel.id)
 
     if (tags:=q.get("tags")):
@@ -92,8 +92,8 @@ def filter_packages():
             "id": row.id,
             "name": row.input,
             "tags": [x.tag for x in row.tags],
-            "package": row.metadata_col["package_name"],
-            "release": row.metadata_col["package_release"],
+            "package": row.package,
+            "release": row.package_release,
             "score": row.scan_score
         })
 
@@ -104,6 +104,9 @@ def filter_packages():
 @bp.route("/project/<pkg_name>")
 @bp.route("/project/<pkg_name>/<release>")
 def view_package(pkg_name: str, release: str = "latest"):
+    if release == "all":  # TODO: issue a warning
+        release = "latest"
+
     pkg_name = canonicalize_name(pkg_name)
     conn = config.get_db()
 

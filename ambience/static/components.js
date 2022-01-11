@@ -274,10 +274,10 @@ Vue.component("latest-scans", {
 
         <div class="tooltip bs-tooltip-top" role="tooltip">
   <div class="tooltip-arrow"></div>
-  <div class="tooltip-inner">
-    Some tooltip text!
-  </div>
-</div>
+      <div class="tooltip-inner">
+        Some tooltip text!
+      </div>
+    </div>
         Latest scans
       </div>
       <div class="card-body d-grid gap-1">
@@ -309,6 +309,72 @@ Vue.component("latest-scans", {
     created: function(){
         var t = this;
         axios.get("/api/v1.0/latest_scans").then(response => (t.scans = response.data));
+    }
+});
+
+
+Vue.component("ambience-stats", {
+    template: `
+    <div class="row">
+      <div class="col-md-4 mt-1" v-for="card in cards">
+        <div class="card">
+          <div class="card-body text-center">
+            <h1>
+              <i class="fa fa-circle-o-notch fa-spin fa-fw" v-if="!data"></i>
+              <span v-if="!!data">
+                {{ data[card.cid] }}
+              </span>
+            </h1>
+          </div>
+          <div class="card-footer text-center">
+            {{ card.label }}
+          </div>
+        </div>
+      </div>
+    </div>
+    `,
+    props: {
+        data: {type: Object, default: null},
+        cards: {type: Array, default: [
+                {cid: "scans", label: "Scans"},
+                {cid: "queue", label: "Scans in a queue"},
+                {cid: "detections", label: "Detections"},
+                {cid: "files", label: "Files scanned"},
+                {cid: "size_human", label: "Data processed"}
+            ]}
+    },
+    created: function(){
+        var t = this;
+        axios.get("/api/v1.0/stats").then(response => (t.data = response.data));
+    }
+})
+
+
+Vue.component("suspicious-packages", {
+    template: `
+    <div class="card">
+      <div class="card-header">
+        <h3>
+          <i class="fa fa-box"></i>
+          Most suspicious packages
+          <i class="fa fa-circle-o-notch fa-spin fa-fw" v-if="!packages"></i>
+        </h3>
+      </div>
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item list-group-item-action" v-for="pkg in packages">
+          <span class="badge bg-danger rounded-pill">
+            <i class="fa fa-trophy"></i>
+            Score: {{ pkg.score }}
+          </span>
+          {{ pkg.name }}
+        </li>
+      </ul>
+    </div>
+    `,
+    props: {packages: {type: Array, default: null}},
+    created: function(){
+        var t = this;
+        axios.get("/api/v1.0/suspicious_packages").then(response=>(t.packages=response.data));
     }
 });
 
@@ -445,6 +511,7 @@ Vue.component("package-browser", {
             <div v-if="!!results" class="d-grid gap-1 w-100">
                 <div class="input-group input-group-sm" v-for="result in results.packages">
                   <span class="input-group-text form-control">
+                    <span class="badge bg-secondary">Score: {{ result.score }}</span> &nbsp;
                     <i class="fa fa-box"></i> &nbsp;
                     {{ result.name }}
                   </span>
