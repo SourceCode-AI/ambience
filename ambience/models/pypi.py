@@ -2,7 +2,6 @@ import flask
 from packaging.utils import canonicalize_name  # TODO: add to dependencies
 import sqlalchemy as sa
 from sqlalchemy.orm import load_only
-from sqlalchemy.dialects.postgresql import JSONB
 
 from aura import package
 from aura.output import postgres as sql
@@ -98,7 +97,6 @@ def filter_packages():
         })
 
     return flask.jsonify({"packages": results, "count": len(results)})
-
 
 
 @bp.route("/project/<pkg_name>")

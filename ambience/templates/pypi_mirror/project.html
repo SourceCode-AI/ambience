@@ -1,0 +1,26 @@
+{% macro req_python(dist) -%}
+{% if dist.get("requires_python") %}data-requires-python="{{ dist["requires_python"] }}"{% endif %}
+{%- endmacro  -%}
+
+{%- macro dist_url(dist) -%}
+{{ dist["url"] }}#sha256={{ dist["digests"]["sha256"] }}
+{%- endmacro -%}
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="pypi:repository-version" content="1.0">
+  </head>
+  <body>
+    <h1>Links for {{ pkg["info"]["name"] }}</h1>
+  {% for release in pkg["releases"].values() %}
+    {% for dist in release %}
+      <a href="{{ dist_url(dist) }}" {{ req_python(dist) }}>
+        {{ dist["filename"] }}
+      </a>
+      <br>
+    {% endfor %}
+  {% endfor %}
+  <!--SERIAL {{ pkg["last_serial"] }}-->
+  </body>
+</html>

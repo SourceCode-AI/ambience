@@ -73,3 +73,20 @@ def suspicious_packages():
         })
 
     return flask.jsonify(sus_pkgs)
+
+
+@bp.route("/api/v1.0/submit_scan")
+def submit_scan():
+    if not flask.g.user:
+        return flask.abort(403)
+    elif not flask.g.user.is_admin:
+        return flask.abort(403)
+
+    # TODO: add json schema and csrf protection
+    uri = flask.request.args["uri"]
+    scan = sql.PendingScans(uri=uri)
+    flask.g.db_session.add(scan)
+    flask.g.db_session.commit()
+
+    return flask.redirect(flask.url_for("scan.queued_scan_view", scan_id=scan.queue_id))
+

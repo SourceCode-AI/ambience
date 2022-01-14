@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="pypi:repository-version" content="1.0">
+  </head>
+  <body>
+    {% for pkg in packages %}
+    <a href="/simple/{{ pkg }}/">{{ pkg }}</a>
+    {% endfor %}
+  </body>
+</html>

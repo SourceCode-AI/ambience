@@ -91,13 +91,19 @@
                 <div class="col-md-12">
                   <div class="card mt-1 shadow">
                     <div class="card-header">
+                      {% if scan %}
+                      <span class="badge bg-secondary">
+                        Score: {{ scan.data.score }}
+                      </span>
+                      {% endif %}
+
                       <b class="text-end">
                         {{ published_pkg["filename"] }}
                       </b>
-                      {% if scan %}
-                      <span class="badge bg-secondary float-end">
-                        Score: {{ scan.data.score }}
-                      </span>
+                      {% if g.user.is_admin %}
+                        <a class="btn btn-sm btn-success float-end" href="/api/v1.0/submit_scan?uri={{ as_uri("pypi://"+pkg.name, quote=True, release=release, filename=published_pkg["filename"]) }}" target="_blank">
+                          <i class="fa fa-user-md"></i>
+                        </a>
                       {% endif %}
                     </div>
 
@@ -143,7 +149,7 @@
                         </a>
                         {% if scan %}
                           <a class="btn btn-primary btn-sm" href="{{ url_for("scan.show_scan", scan_id=scan["scan_id"]) }}" target="_blank">
-                            <i class="fa fa-scroll"></i>
+                            <i class="fa fa-file-medical-alt"></i>
                             Open scan report
                           </a>
                         {% endif %}

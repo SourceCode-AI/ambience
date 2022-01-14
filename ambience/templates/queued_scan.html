@@ -1,0 +1,29 @@
+{% extends "template.html" %}
+
+{% block post_header %}
+ <meta http-equiv="refresh" content="3">
+{% endblock %}
+
+{% block container %}
+<div class="row">
+  <div class="col-sm-4 offset-md-4">
+    <div class="card">
+      <div class="card-header text-center">
+        <code>{{ scan.uri }}</code>
+      </div>
+      <div class="card-body text-center">
+        <h2>
+          <i class="fa fa-circle-o-notch fa-spin fa-fw"></i>
+        </h2>
+      </div>
+      <div class="card-footer text-center">
+        {% if scan.status == 0 %}
+          <h4>Waiting for scan to start</h4>
+        {% else %}
+          <h4>Running scan</h4>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

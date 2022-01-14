@@ -9,7 +9,12 @@
         <h2>Welcome to Ambience!</h2>
         <p>
           Ambience is a server for aggregating, searching and auditing the results from scans produced by the Aura project.
+          You can use this server to whitelist only audited packages when installing the packages on a client:
         </p>
+        <ul>
+          <li><code>pip install --index-url {{ base_url }}simple/ package1 package2 ...</code></li>
+          <li><code>easy_install --index-url {{ base_url }}simple/ package1 package2 ...</code></li>
+        </ul>
       </div>
     </div>
 

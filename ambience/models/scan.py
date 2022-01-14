@@ -2,7 +2,10 @@ from importlib import resources
 from base64 import b64encode
 
 import flask
+import sqlalchemy as sa
+
 from aura.json_proxy import dumps
+from aura.output import postgres as pg
 
 from .. import config
 
@@ -99,3 +102,20 @@ def export_html_scan(scan_id):
         js_renderer=js_renderer,
         custom_css=aura_css
     )
+
+
+@bp.route("/queued_scans/<int:scan_id>")
+def queued_scan_view(scan_id):
+    pending_scan_obj = pg.PendingScans.query.get(scan_id)
+
+    if pending_scan_obj is None:
+        return flask.abort(404)
+
+    if pending_scan_obj.status != 0:
+        stmt = sa.select(pg.ScanModel.id).where(pg.ScanModel.reference==pending_scan_obj.reference)
+
+        scan_obj = flask.g.db_session.execute(stmt).fetchone()
+        if scan_obj:
+            return flask.redirect(flask.url_for("scan.show_scan", scan_id=scan_obj.id))
+
+    return flask.render_template("queued_scan.html", scan=pending_scan_obj)

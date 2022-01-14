@@ -239,17 +239,18 @@ Vue.component("ambience-search", {
 Vue.component("view-scan", {
     template: `
         <div class="row">
-          <div class="col-sm-12 text-center p-4" v-if="scan_data === null">
+          <div class="col-sm-12 text-center p-4" v-if="!scan_data">
             <h2><i class="fa fa-circle-o-notch fa-spin fa-fw"></i> Loading scan</h2>
           </div>
-          <div class="col-sm-12" v-if="scan_data !== null">
+          <div class="col-sm-12" v-if="!!scan_data">
             <tabs :results="scan_data"></tabs>
           </div>
         </div>
     `,
-    props: {
-        scan_id: {type: Number},
-        scan_data: {type: Object, default: null}
+    props: {scan_id: {type: Number, required: true}},
+    data: function(){
+        'use strict';
+        return {"scan_data": null};
     },
     methods: {
         fetch_scan: function() {
@@ -360,15 +361,24 @@ Vue.component("suspicious-packages", {
           <i class="fa fa-circle-o-notch fa-spin fa-fw" v-if="!packages"></i>
         </h3>
       </div>
-      <ul class="list-group list-group-flush">
-        <li class="list-group-item list-group-item-action" v-for="pkg in packages">
-          <span class="badge bg-danger rounded-pill">
-            <i class="fa fa-trophy"></i>
-            Score: {{ pkg.score }}
-          </span>
-          {{ pkg.name }}
-        </li>
-      </ul>
+      
+      <div class="card-body d-grid gap-1">
+        <div class="input-group input-group-sm float-right" v-for="pkg in packages">
+            <span class="input-group-text form-control">
+              <span class="badge bg-danger rounded-pill">
+                <i class="fa fa-trophy"></i>
+                Score: {{ pkg.score }}
+              </span> &nbsp;
+              {{ pkg.name }}
+            </span>
+            <a class="btn btn-outline-primary" :href="'/scans/'+pkg.id" target="_blank">
+              <i class="fa fa-file-medical-alt"></i>
+              </a>
+            <a class="btn btn-outline-primary" :href="'/project/'+pkg.package" target="_blank">
+              <i class="fa fa-box-open"></i>
+            </a>
+          </div>
+      </div>
     </div>
     `,
     props: {packages: {type: Array, default: null}},

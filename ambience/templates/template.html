@@ -7,8 +7,15 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/d3@7.3.0/dist/d3.min.js" integrity="sha256-afYoXSIFAhNwQKRFhrZkSrYswZBMUtSLJetWCKjDHzQ=" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/axios@0.24.0/dist/axios.min.js" integrity="sha256-rtaseLgkmpx8/wAw87kh7p93HLFoQWTz5nnhAjpNXGk=" crossorigin="anonymous"></script>
+  {% if not debug %}
   <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js" integrity="sha256-kXTEJcRFN330VirZFl6gj9+UM6gIKW195fYZeR3xDhc=" crossorigin="anonymous"></script>
+  {% else %}
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js" integrity="sha256-abdUg7JwQh4aiUJt1ZOHugkHcjE1YcPp+kFTlqeOiTY=" crossorigin="anonymous"></script>
+  {% endif %}
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+  <link href="{{ url_for("aura_static", fname="aura.data.html_results.aura.css") }}" rel="stylesheet">
+  {% block post_header %}
+  {% endblock %}
 </head>
 <body>
   {% set active_page = active_page | default("n/a") %}

@@ -6,6 +6,7 @@ import hashlib
 
 import sqlalchemy as sa
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.ext.hybrid import hybrid_property
 
 from aura.output import postgres as pg
 
@@ -41,6 +42,10 @@ class UserModel(Base):
             passwd=hashed_passwd
         )
 
+    @hybrid_property
+    def is_admin(self) -> bool:
+        return self.acc_type == UserType.admin
+
     def check_password(self, passwd) -> bool:
         return hashlib.sha256((self.salt + passwd)).hexdigest() == self.passwd
 
@@ -57,6 +62,5 @@ def init_data(engine=None):
     if engine is None:
         engine = pg.get_engine(config.CFG["postgres"])
 
+    pg.Base.metadata.create_all(engine)
     Base.metadata.create_all(engine)
-
-

@@ -1,6 +1,6 @@
 from importlib import resources
 from dataclasses import dataclass
-import secrets
+from urllib.parse import urlencode, quote_plus
 import time
 import typing as t
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from aura.config import get_logger
 from aura.output import postgres as sql
 
-from .models import scan, search, pypi, sql as sql_models
+from .models import scan, search, pypi, pypi_mirror, sql as sql_models
 from .models.graphql.schema import schema as graphql_schema
 from . import api
 from . import auth
@@ -21,6 +21,7 @@ from . import config
 
 AURA_STATIC_WHITELIST = (
     "aura.data.html_results.components.js",
+    "aura.data.html_results.aura.css"
 )
 logger = get_logger(__name__)
 
@@ -31,12 +32,14 @@ sql.Base.query = db_session.query_property()
 
 app = flask.Flask(__name__)
 app.secret_key = config.CFG["flask_secret"]
+app.jinja_env.filters["quote_plus"] = lambda u: quote_plus(u)
 
 app.register_blueprint(scan.bp)
 app.register_blueprint(search.bp)
 app.register_blueprint(pypi.bp)
 app.register_blueprint(api.bp)
 app.register_blueprint(auth.bp)
+app.register_blueprint(pypi_mirror.bp)
 
 
 @dataclass
@@ -59,7 +62,7 @@ class MenuItem:
 
 @app.route("/")
 def home():
-    return flask.render_template("home.html")
+    return flask.render_template("home.html", base_url=config.CFG.get("base_url"))
 
 
 @app.route("/aura_static/<fname>")
@@ -116,7 +119,24 @@ MENU_ITEMS = (
     MenuItem(endpoint="pypi.list_packages", menu_id="list_packages", text="Pypi packages", icon="fa-boxes"),
 )
 
+def as_uri(base: str, quote: bool=False, **kwargs) -> str:
+    uri = base
+
+    if kwargs:
+        uri = f"{uri}?{urlencode(kwargs)}"
+
+    if quote:
+        uri = quote_plus(uri)
+
+    return uri
+
 
 @app.context_processor
-def inject_menu_items():
-    return {"menu_items": MENU_ITEMS}
+def inject_data():
+    return {
+        "menu_items": MENU_ITEMS,
+        "debug": app.debug,
+        "as_uri": as_uri
+    }
+
+
