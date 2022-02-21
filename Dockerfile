@@ -1,4 +1,4 @@
-FROM aura-full
+FROM sourcecodeai/ambience:base
 
 
 RUN apk add --no-cache musl-dev linux-headers

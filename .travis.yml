@@ -24,5 +24,5 @@ jobs:
     - stage: build
       if: (branch = master) OR (branch = dev)
       script:
-        - cd ./aura && docker buildx build --platform=linux/amd64,linux/arm64 --target aura-full . && cd ..
+        - cd ./aura && docker buildx build --platform=linux/amd64,linux/arm64 --target ${DOCKER_REPO}:base . && cd ..
         - docker buildx build --platform=linux/amd64,linux/arm64 --push -t ${DOCKER_REPO}:${IMAGE_TAG} .
