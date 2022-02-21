@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ambience-server
+  labels:
+    app: ambience-server
+spec:
+  selector:
+    matchLabels:
+      app: ambience-server
+  template:
+    metadata:
+      labels:
+        app: ambience-server
+    spec:
+      containers:
+        - name: ambience-server
+          image: sourcecodeai/ambience:latest
+          imagePullPolicy: Always
+          env:
+            - name: AMBIENCE_CFG
+              value: "/ambience-server/ambience_config.yaml"
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              memory: "500Mi"
+            limits:
+              memory: "2Gi"
+              cpu: 1
+          volumeMounts:
+            - mountPath: /ambience-server
+              name: ambience-config
+              readOnly: true
+      volumes:
+        - name: ambience-config
+          secret:
+            secretName: ambience-config
+            items:
+              - key: config
+                path: ambience_config.yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ambience-service
+spec:
+  type: NodePort
+  selector:
+    app: ambience-server
+  ports:
+    - protocol: TCP
+      port: 8080
+      nodePort: 30080
