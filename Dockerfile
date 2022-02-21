@@ -11,8 +11,7 @@ ADD ambience /ambience-server/ambience
 
 WORKDIR /ambience-server
 
-RUN source $HOME/.poetry/env && \
-    poetry build -f sdist  && \
+RUN poetry build -f sdist  && \
     pip install ./dist/ambience-*.tar.gz && \
     pip install uwsgi && \
     chmod +x /ambience-server/start_server.sh
