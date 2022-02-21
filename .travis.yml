@@ -1,0 +1,27 @@
+language: python
+os: linux
+python:
+  - "3.9"
+
+install:
+  - echo "install disabled"
+
+services:
+  - docker
+
+
+before_install:
+  - GIT_TAG=$(git describe --long --tags --dirty --always)
+  - DOCKER_REPO="sourcecodeai/ambience"
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+
+stages:
+  - build
+
+
+jobs:
+  include:
+    - stage: build
+      if: (branch = master) OR (branch = dev)
+      script:
+        - echo "hello world"
