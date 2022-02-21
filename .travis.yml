@@ -1,7 +1,4 @@
-language: python
-os: linux
-python:
-  - "3.9"
+dist: xenial
 
 install:
   - echo "install disabled"
@@ -13,6 +10,7 @@ services:
 before_install:
   - GIT_TAG=$(git describe --long --tags --dirty --always)
   - DOCKER_REPO="sourcecodeai/ambience"
+  - IMAGE_TAG=latest
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
 stages:
@@ -24,4 +22,5 @@ jobs:
     - stage: build
       if: (branch = master) OR (branch = dev)
       script:
-        - echo "hello world"
+        - cd /analyzer/ && docker buildx build --platform=linux/amd64,linux/arm64 --target aura-full .
+        - docker buildx build --platform=linux/amd64,linux/arm64 --push --target ${DOCKER_REPO}:${IMAGE_TAG} .
