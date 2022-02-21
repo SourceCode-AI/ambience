@@ -12,6 +12,7 @@ services:
 before_install:
   - GIT_TAG=$(git describe --long --tags --dirty --always)
   - DOCKER_REPO="sourcecodeai/ambience"
+  - BASE_TAG=base-${GIT_TAG}
   - IMAGE_TAG=latest
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
 
@@ -24,5 +25,5 @@ jobs:
     - stage: build
       if: (branch = master) OR (branch = dev)
       script:
-        - cd ./aura && docker buildx build --platform=linux/amd64,linux/arm64 --target aura-full -t sourcecodeai/ambience:base . && cd ..
-        - docker buildx build --platform=linux/amd64,linux/arm64 --push -t ${DOCKER_REPO}:${IMAGE_TAG} .
+        - cd ./aura && docker buildx build --platform=linux/amd64,linux/arm64 --target aura-full --push -t ${DOCKER_REPO}:base -t ${DOCKER_REPO}:${BASE_TAG} . && cd ..
+        - docker buildx build --platform=linux/amd64,linux/arm64 --build-arg basetag=${BASETAG} --push -t ${DOCKER_REPO}:${IMAGE_TAG} .

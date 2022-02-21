@@ -1,4 +1,6 @@
-FROM sourcecodeai/ambience:base
+ARG basetag=base
+
+FROM sourcecodeai/ambience:${basetag}
 
 
 RUN apk add --no-cache musl-dev linux-headers
