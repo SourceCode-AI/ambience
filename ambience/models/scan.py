@@ -63,7 +63,7 @@ def list_scans():
 
     with conn.cursor() as cur:
         cur.execute("""
-            SELECT id, (scan_data->'name'), created
+            SELECT id, (scan_data->'name'), created, package
             FROM scans
             ORDER BY CREATED DESC
             LIMIT 250
@@ -73,7 +73,8 @@ def list_scans():
             last_scans.append({
                 "id": row[0],
                 "name": row[1],
-                "created": row[2]
+                "created": row[2],
+                "package": row[3]
             })
 
     return flask.render_template("scans.html", last_scans=last_scans)

@@ -26,15 +26,18 @@ def latest_scans_api():
 def stats():
     data = {}
 
-    data["scans"] = flask.g.db_session.query(sql.ScanModel).count()
-    data["queue"] = flask.g.db_session.execute(sa.text("SELECT COUNT(*) FROM pending_scans WHERE status!=2")).first()[0]
-    data["detections"] = flask.g.db_session.query(sql.DetectionModel).count()
-    data["files"] = flask.g.db_session.query(
-        sa.func.sum(sa.cast(sql.ScanModel.metadata_col["files_processed"], sa.INTEGER))
-    ).first()[0] or 0
-    data["size"] = flask.g.db_session.query(
-        sa.func.sum(sa.cast(sql.ScanModel.metadata_col["data_processed"], sa.INTEGER))
-    ).first()[0] or 0
+    for row in flask.g.db_session.execute(sa.text("SELECT * FROM ambience_stats")):
+        data[row[0]] = row[1] or 0
+
+    # data["scans"] = flask.g.db_session.query(sql.ScanModel).count()
+    # data["queue"] = flask.g.db_session.execute(sa.text("SELECT COUNT(*) FROM pending_scans WHERE status!=2")).first()[0]
+    # data["detections"] = flask.g.db_session.query(sql.DetectionModel).count()
+    # data["files"] = flask.g.db_session.query(
+    #     sa.func.sum(sa.cast(sql.ScanModel.metadata_col["files_processed"], sa.BIGINT))
+    # ).first()[0] or 0
+    # data["size"] = flask.g.db_session.query(
+    #     sa.func.sum(sa.cast(sql.ScanModel.metadata_col["data_processed"], sa.BIGINT))
+    # ).first()[0] or 0
 
     dsize = data['size']
     num_data = f"{dsize} b"

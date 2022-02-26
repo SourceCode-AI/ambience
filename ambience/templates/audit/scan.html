@@ -1,0 +1,41 @@
+{% extends "template.html" %}
+
+{% block container %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <form class="card shadow" action="{{ url_for("audit.audit_scan", scan_id=scan_id) }}" method="POST">
+      <div class="card-header">
+        <h2>Audit of XXX</h2>
+      </div>
+      <div class="card-body">
+        <fieldset>
+          <div class="mb-3">
+            <label for="verdict" class="form-label">Audit verdict:</label>
+            <select id="verdict" class="form-select" name="verdict">
+              <option value="unknown">Unknown</option>
+              <option value="blacklist">Blacklist</option>
+              <option value="whitelist">Whitelist</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <textarea name="comment" class="form-control" placeholder="Write comment about your decision here" id="comment"></textarea>
+          </div>
+          <div class="mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="confirm" name="confirm">
+              <label class="form-check-label" for="confirm">
+                I confirm the data
+              </label>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+      <div class="card-footer">
+        <button class="btn btn-primary" type="submit">
+          Submit audit verdict
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

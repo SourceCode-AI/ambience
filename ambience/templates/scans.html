@@ -15,10 +15,16 @@
             {{ scan.created.replace(microsecond=0) }}
           </span>
           Scan "{{ scan.name }}"
-          <a class="btn btn-primary float-end" href="{{ url_for("scan.show_scan", scan_id=scan["id"]) }}" target="_blank">
+          <a class="btn btn-sm btn-outline-primary float-end" href="{{ url_for("scan.show_scan", scan_id=scan["id"]) }}" target="_blank">
             <i class="fa fa-file-medical-alt"></i>
-            Open full scan report
+            Open scan
           </a>
+          {%  if scan.package %}
+          <a class="btn btn-sm btn-outline-primary float-end" href="/project/{{ scan.package }}" target="_blank">
+            <i class="fa fa-box-open"></i>
+            Open package
+          </a>
+          {% endif %}
         </li>
         {% endfor %}
       </ul>

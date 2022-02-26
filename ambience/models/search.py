@@ -12,30 +12,31 @@ from .. import config
 bp = flask.Blueprint("search", __name__)
 
 
-
-@bp.route("/search")
-def search():
-    return flask.render_template("search.html")
+class SearchError(RuntimeError):
+    pass
 
 
-@bp.route("/api/v1.0/search/detections", methods=["GET", "POST"])
-def search_detections_api():
-    query = normalize_query(flask.request.args["q"])
+def search_detections(query):
+    query = normalize_query(query)
     detections = []
     conn = config.get_db()
 
     try:
         with conn.cursor() as cur:
             start = time.monotonic()
-
             cur.execute("""
-                SELECT detections.scan_id, (scans.scan_data->'name'), detections.data
-                FROM detections
-                INNER JOIN scans ON scans.id=detections.scan_id
-                WHERE idx_vector @@ to_tsquery('english', %s)
-                ORDER BY detections.score DESC
-                LIMIT 250;
-            """, (query,))
+                    SELECT * FROM (
+                        SELECT
+                            distinct on (detections.score, scans.package, detections.slug)
+                            detections.scan_id as scan_id, (scans.scan_data->'name') as name, detections.data as data, detections.score as score
+                        FROM detections
+                        INNER JOIN scans ON scans.id=detections.scan_id
+                        WHERE idx_vector @@ to_tsquery('english', %s)
+                        ORDER BY detections.score, scans.package, detections.slug DESC
+                    ) AS subq
+                    ORDER BY subq.score DESC
+                    LIMIT 100
+                """, (query,))
 
             for row in cur.fetchall():
                 detections.append({
@@ -43,34 +44,34 @@ def search_detections_api():
                     "scan_name": row[1],
                     "detection": row[2]
                 })
-
             end = time.monotonic()
-
-        print(f"Search completed in {(end-start):.4f}s")  # FIXME: convert to logger
-        return {"detections": detections, "count": len(detections)}
+        return detections
     except SyntaxError as exc:
-        print(exc.args)
-
         if "syntax error in tsquery" in exc.args[0]:
-            return {"error": "There is a syntax error in your search query"}
+            raise SearchError("There is a syntax error in your search query") from exc
         else:
-            return {"error": "An error occured while searching the database"}
+            raise SearchError("An error occured while searching the database") from exc
 
 
-@bp.route("/api/v1.0/search/filepaths", methods=["GET", "POST"])
-def search_filepaths_api():
-    query = normalize_query(flask.request.args["q"])
+def search_filepaths(query):
+    query = normalize_query(query)
     filepaths = []
     conn = config.get_db()
     try:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT locations.name, locations.scan_id, locations.metadata, (scans.scan_data->'name')
-                FROM locations
-                INNER JOIN scans ON scans.id=locations.scan_id
-                WHERE idx_path @@ to_tsquery('english', %s)
-                LIMIT 250;
-            """, (query,))
+                SELECT * FROM (
+                    SELECT
+                        DISTINCT ON (scans.package)
+                        locations.name, locations.scan_id, locations.metadata, (scans.scan_data->'name'), scans.score as score
+                    FROM locations
+                    INNER JOIN scans ON scans.id=locations.scan_id
+                    WHERE idx_path @@ to_tsquery('english', %s)
+                    ORDER BY scans.package
+                ) AS subq
+                ORDER BY subq.score DESC
+                LIMIT 100
+                """, (query,))
             for row in cur:
                 filepaths.append({
                     "name": row[0],
@@ -79,12 +80,47 @@ def search_filepaths_api():
                     "scan_name": row[3]
                 })
 
-        return {"filepaths": filepaths, "count": len(filepaths)}
+        return filepaths
     except SyntaxError as exc:
         if "syntax error in tsquery" in exc.args[0]:
-            return {"error": "There is a syntax error in your search query"}
+            raise SearchError("There is a syntax error in your search query")
         else:
-            return {"error": "An error occured while searching the database"}
+            raise SearchError("An error occured while searching the database")
+
+
+
+@bp.route("/search")
+def search():
+    return flask.render_template("search.html")
+
+
+@bp.route("/api/v1.0/search", methods=["GET", "POST"])
+def search_all():
+    query = flask.request.args["q"]
+    try:
+        detections = search_detections(query)
+        filepaths = search_filepaths(query)
+        return {"detections": detections, "filepaths": filepaths}
+    except SearchError as exc:
+        return {"error": exc.args[0]}
+
+
+@bp.route("/api/v1.0/search/detections", methods=["GET", "POST"])
+def search_detections_api():
+    try:
+        detections = search_detections(flask.request.args["q"])
+        return {"detections": detections, "count": len(detections)}
+    except SearchError as exc:
+        return {"error": exc.args[0]}
+
+
+@bp.route("/api/v1.0/search/filepaths", methods=["GET", "POST"])
+def search_filepaths_api():
+    try:
+        filepaths = search_filepaths(flask.request.args["q"])
+        return {"filepaths": filepaths, "count": len(filepaths)}
+    except SearchError as exc:
+        return {"error": exc.args[0]}
 
 
 @bp.route("/api/v1.0/search/packages", methods=["GET", "POST"])

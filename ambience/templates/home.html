@@ -8,8 +8,12 @@
       <div class="col-md-12">
         <h2>Welcome to Ambience!</h2>
         <p>
-          Ambience is a server for aggregating, searching and auditing the results from scans produced by the Aura project.
-          You can use this server to whitelist only audited packages when installing the packages on a client:
+          Ambience is a server for indexing and aggregating the results of audits of Python packages.
+          Our aim is to continually scan published python packages and to provide the collected data publicly for free.
+        </p>
+
+        <p>
+          You can use this server as a PyPI mirror that will allow only audited and whitelisted packages to be installed:
         </p>
         <ul>
           <li><code>pip install --index-url {{ base_url }}simple/ package1 package2 ...</code></li>
@@ -18,19 +22,56 @@
       </div>
     </div>
 
-
-    <ambience-stats></ambience-stats>
-
     <div class="row mt-2">
       <div class="col-md-12">
-        <suspicious-packages></suspicious-packages>
+        <tab-container :active_tab="'Most suspicious packages'">
+          <tab-content :title="'Most suspicious packages'">
+            <suspicious-packages></suspicious-packages>
+          </tab-content>
+          <tab-content :title="'Latest scans'">
+            <latest-scans></latest-scans>
+          </tab-content>
+        </tab-container>
       </div>
     </div>
   </div>
 
   <div class="col-lg-4">
-    <latest-scans></latest-scans>
+    <ambience-stats></ambience-stats>
   </div>
-
 </div>
+
+<div class="row m-2 justify-content-center">
+  <div class="col-xl-6 col-lg-8 col-md-12">
+    <div class="card mt-3 shadow">
+      <div class="row g-0">
+        <div class="col-md-4 col-sm-2 p-3">
+          <img src="/static/aura_logo.png" class="img-fluid rounded-start" alt="Aura logo">
+        </div>
+        <div class="col-md-8 col-sm-10">
+          <div class="card-body">
+            <h5 class="card-title">
+              Powered by Aura @ SourceCode.AI
+            </h5>
+            <p class="card-text">
+              Auditing and scanning in Ambience is done by the engine called Aura.
+              Developed at SourceCode.AI, this SAST scanner has been designed to audit the whole PyPI package repository and other Python source code on a large scale.
+            </p>
+            <div class="input-group">
+              <a class="btn btn-outline-secondary" href="https://aura.sourcecode.ai" target="_blank">
+                <i class="fa fa-home"></i>
+                Homepage
+              </a>
+              <a class="btn btn-outline-secondary" href="https://github.com/SourceCode-AI/aura" target="_blank">
+                <i class="fab fa-github"></i>
+                GitHub
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}

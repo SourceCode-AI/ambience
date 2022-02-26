@@ -1,3 +1,30 @@
+{% macro render_menu_item(menu_item, is_sub=False) %}
+  {% if menu_item.enabled() %}
+  <li class="{%  if not is_sub %}nav-item{% endif %} {% if menu_item.subitems %}dropdown{% endif %}">
+    {% set a_cls=("nav-link" if not is_sub else "dropdown-item") %}
+    <a class="{{ a_cls }} {% if active_page == menu_item %}active{% endif %}" href="{{ menu_item.href }}" {% if menu_item.subitems %}data-bs-toggle="dropdown"{% endif %}>
+      {% if menu_item.icon %}
+        <i class="fa {{ menu_item.icon }}"></i>
+      {% endif %}
+      {{ menu_item.text }}
+      {% if menu_item.subitems %}
+        <i class="fa fa-caret-down"></i>
+      {% endif %}
+    </a>
+    {% if menu_item.subitems %}
+      <ul class="dropdown-menu" aria-labelledby="navbarScrollingDropdown">
+        {% for subitem in menu_item.subitems %}
+          {% if subitem.enabled() %}
+            {{ render_menu_item(subitem, is_sub=True) }}
+          {% endif %}
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </li>
+  {% endif %}
+{% endmacro %}
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,49 +45,39 @@
   {% endblock %}
 </head>
 <body>
+<div id="app">
   {% set active_page = active_page | default("n/a") %}
-  <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+  <nav class="navbar navbar-expand-xl navbar-dark bg-dark sticky-top">
     <div class="container-fluid">
-      <a class="navbar-brand" href="/">Ambience</a>
-      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-        {% for menu_item in menu_items %}
-        <li class="nav-item">
-          <a class="nav-link {% if active_page == menu_item %}active{% endif %}" href="{{ menu_item.href }}">
-            {% if menu_item.icon %}
-              <i class="fa {{ menu_item.icon }}"></i>
-            {% endif %}
-            {{ menu_item.text }}
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarToggler" aria-controls="navbarTogglerDemo01" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <a class="navbar-brand" href="/">
+        Ambience
+        <span class="badge bg-danger">beta</span>
+      </a>
+      <div id="navbarToggler" class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+          {% for menu_item in menu_items %}
+            {{ render_menu_item(menu_item) }}
+          {% endfor %}
+        </ul>
+
+        <search-bar></search-bar>
+
+        <span class="navbar-text">
+          by SourceCode.AI
+          <a href="https://github.com/SourceCode-AI/ambience" target="_blank">
+            <i class="fab fa-github"></i>
           </a>
-        </li>
-        {% endfor %}
+        </span>
+      </div>
 
-        {% if g.user %}
-          <li class="nav-item dropdown">
-            <a class="nav-link" href="#">
-              <i class="fa fa-user"></i>
-              {{ g.user.email }}
-            </a>
-            <ul class="dropdown-menu" aria-labelledby="navbarScrollingDropdown">
-              <li>
-                <a class="dropdown-item" href="#">Log-out</a>
-              </li>
-            </ul>
-          </li>
-        {% else %}
-          <li class="nav-item">
-            <a class="nav-link" href="/login">
-              <i class="fa fa-sign-in-alt"></i>
-              Log-in
-            </a>
-          </li>
-        {% endif %}
-      </ul>
-
-      <span class="navbar-text">by SourceCode.AI</span>
     </div>
   </nav>
 
-  <div class="container-fluid mt-2 pb-2" id="app">
+  <div class="container-fluid mt-2 pb-2">
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         <div class="row">
@@ -85,6 +102,8 @@
       © 2021 SourceCode.AI, powered by Aura
     </footer>
   </div-->
+
+</div>
 
   {% if not disable_app %}
     <script src="{{ url_for("aura_static", fname="aura.data.html_results.components.js") }}"></script>

@@ -11,7 +11,7 @@
 
     <div class="col-lg-2 text-end">
       {% if release == latest %}
-        <span class="badge bg-success small">
+        <span class="badge bg-primary small">
           <i class="fa fa-check"></i>
           Latest version
         </span>
@@ -71,12 +71,20 @@
                   <a class="list-group-item list-group-item-action {% if release==version %}active{% endif %}" href="{{ url_for("pypi.view_package", pkg_name=package_name, release=version) }}?active_tab=Audit">
                     {{ version }}
 
+                    {% if 'whitelist' in version_audits[version] %}
+                      <span class="badge bg-success"><i class="fa fa-medal"></i></span>
+                    {% endif %}
+
+                    {% if 'blacklist' in version_audits[version] %}
+                      <span class="badge bg-danger"><i class="fa fa-ban"></i></span>
+                    {% endif %}
+
                     {% if version in release_scores %}
                       <span class="badge bg-secondary">Score: {{ release_scores[version] }}</span>
                     {% endif %}
 
                     {% if version == latest %}
-                    <span class="badge bg-success"><i class="fa fa-check"></i> Latest</span>
+                    <span class="badge bg-primary"><i class="fa fa-check"></i> Latest</span>
                     {% endif %}
                   </a>
                   {% endfor %}
@@ -88,8 +96,16 @@
               <div class="row">
                 {% for published_pkg in pkg.info["releases"][release] %}
                 {% set scan = scans.get(published_pkg["filename"]) %}
+                {% set dist_audit = filename_audits.get(published_pkg["filename"]) %}
+                {% if dist_audit == "whitelist" %}
+                    {% set card_bg="bg-success" %}
+                {% elif dist_audit == "blacklist" %}
+                    {% set card_bg = "bg-danger" %}
+                {% else %}
+                    {% set card_bg = "" %}
+                {% endif %}
                 <div class="col-md-12">
-                  <div class="card mt-1 shadow">
+                  <div class="card mt-2 shadow">
                     <div class="card-header">
                       {% if scan %}
                       <span class="badge bg-secondary">
@@ -97,17 +113,26 @@
                       </span>
                       {% endif %}
 
+                      {% if 'whitelist' == dist_audit %}
+                        <span class="badge bg-success"><i class="fa fa-medal"></i> Audit: whitelisted</span>
+
+                      {% elif 'blacklist' == dist_audit %}
+                        <span class="badge bg-danger"><i class="fa fa-ban"></i> Audit: blacklisted</span>
+                      {% else %}
+                        <span class="badge bg-secondary"><i class="fa fa-question-circle"></i> Audit: unknown</span>
+                      {% endif %}
+
                       <b class="text-end">
                         {{ published_pkg["filename"] }}
                       </b>
                       {% if g.user.is_admin %}
                         <a class="btn btn-sm btn-success float-end" href="/api/v1.0/submit_scan?uri={{ as_uri("pypi://"+pkg.name, quote=True, release=release, filename=published_pkg["filename"]) }}" target="_blank">
-                          <i class="fa fa-user-md"></i>
+                          <i class="fa fa-user-md"></i> Schedule for a scan
                         </a>
                       {% endif %}
                     </div>
 
-                    <div class="card-body">
+                    <div class="card-body {{ card_bg }}">
                       {% if not scan %}
                       <div class="alert alert-primary text-center">
                         <h3><i class="fa fa-clock"></i> We have not scanned this package yet</h3>
@@ -153,6 +178,13 @@
                             Open scan report
                           </a>
                         {% endif %}
+
+                        {% if g.user and g.user.is_admin and scan %}
+                          <a class="btn btn-primary btn-sm" href="{{ url_for("audit.audit_scan", scan_id=scan["scan_id"]) }}">
+                            Submit audit verdict
+                          </a>
+                        {% endif %}
+
                       </div>
                     </div>
 

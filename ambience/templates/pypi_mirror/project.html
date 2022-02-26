@@ -12,15 +12,13 @@
     <meta name="pypi:repository-version" content="1.0">
   </head>
   <body>
-    <h1>Links for {{ pkg["info"]["name"] }}</h1>
-  {% for release in pkg["releases"].values() %}
-    {% for dist in release %}
+    <h1>Links for {{ pkg_name }}</h1>
+    {% for dist in dists %}
       <a href="{{ dist_url(dist) }}" {{ req_python(dist) }}>
         {{ dist["filename"] }}
       </a>
       <br>
     {% endfor %}
-  {% endfor %}
-  <!--SERIAL {{ pkg["last_serial"] }}-->
+  <!--SERIAL {{ serial }}-->
   </body>
 </html>

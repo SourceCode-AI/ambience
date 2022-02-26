@@ -45,8 +45,11 @@ Vue.component("tab-container", {
       </div>
     `,
     props: {
-        active_tab: {type: String},
-        tabs: {type: Array, default: []}
+        active_tab: {type: String}
+    },
+    data: function(){
+        'use strict';
+        return {tabs: []};
     },
     methods: {
         set_tab: function(tab_name){
@@ -99,19 +102,15 @@ Vue.component("ambience-location-view", {
 Vue.component("ambience-search", {
     template: `
     <div class="row">
-      <div class="col-md-8">
+      <div class="col-md-10">
         <input autofocus type="text" class="form-control" placeholder="Type to search..." v-model="query" v-on:keyup.enter="search" />
       </div>
 
       <div class="col-md-2">
-        <select class="form-select" v-model="search_type">
-          <option value="detections">Full text (detections)</option>
-          <option value="filepaths">File paths</option>
-        </select>
-      </div>
-
-      <div class="col-md-2">
-        <button class="btn btn-outline-secondary" v-on:click="search">Search</button>
+        <button class="btn btn-outline-secondary form-control" v-on:click="search">
+          <i class="fa fa-search"></i>
+          Search
+        </button>
       </div>
     
     <div class="col-md-12 p-4" v-if="error">
@@ -161,49 +160,85 @@ Vue.component("ambience-search", {
         </ul>
       </div>
     </div>
-      
-      <div class="col-md-12">
-        <div class="row" v-if="detections" v-if="search_type == 'detections'">
-          <div class="col-md-16 mt-2" v-for="d in detections">
-            <detection :detection="d.detection">
-              <template v-slot:footer>
-                <hr />
-                <div class="row">
-                  <div class="col-md-10">
-                    <h3>In scan {{ d.scan_name }}</h3>
-                  </div>
-                  <div class="col-md-2 d-grid">
-                    <a class="btn btn-primary" :href="'/scans/' + d.scan_id" target="_blank">
-                    <i class="fa fa-file-medical-alt"></i>
-                    Open full scan report
-                    </a>
-                  </div>
+
+    <div class="col-lg-12 p-4" v-show="!(searching) && (detections || filepaths)">
+        <tab-container :active_tab="'Detections'">
+          <tab-content :title="'Detections'">
+            <div class="row">
+              <div class="col-md-12" v-if="detections && detections.length == 0">
+                <div class="alert alert-primary text-center">
+                  <h2>No detections found</h2>
                 </div>
-              </template>
-            </detection>
-          </div>
-        </div>
-        
-        <div class="row" v-if="filepaths !== null" v-if="search_type == 'filepaths'">
-          <div class="col-md-12 mt-2" v-for="f in filepaths">
-            <ambience-location-view :location="f"></ambience-location-view>
-          </div>
-        </div>
+              </div>
+            
+              <div class="col-md-12 mt-2" v-for="d in detections">
+                <detection :detection="d.detection">
+                  <template v-slot:footer>
+                    <hr />
+                    <div class="row">
+                      <div class="col-md-10">
+                        <h3>In scan {{ d.scan_name }}</h3>
+                      </div>
+                      <div class="col-md-2 d-grid">
+                        <a class="btn btn-primary" :href="'/scans/' + d.scan_id" target="_blank">
+                        <i class="fa fa-file-medical-alt"></i>
+                        Open full scan report
+                        </a>
+                      </div>
+                    </div>
+                  </template>
+                </detection>
+              </div>
+            </div>
+          </tab-content>
+          <tab-content :title="'File paths'">
+            <div class="row">
+              <div class="col-md-12" v-if="filepaths && filepaths.length == 0">
+                <div class="alert alert-primary text-center">
+                  <h2>No file paths found</h2>
+                </div>
+              </div>
+              <div class="col-md-12 mt-2" v-for="f in filepaths">
+                <ambience-location-view :location="f"></ambience-location-view>
+              </div>
+            </div>
+          </tab-content>
+        </tab-container>
       </div>
+    
     </div>
     `,
-    props: {
-        query: {type: String, default: ""},
-        search_type: {type: String, default: "detections"},
-        detections: {type: Object, default: null},
-        filepaths: {type: Object, default: null},
-        error: {type: String, default: null},
-        wizard: {type: Boolean, default: true},
-        searching: {type: Boolean, default: false},
-        empty: {type: Boolean, default: false}
+    data: function(){
+        'use strict';
+        return {
+            query: "",
+            search_type: "detections",
+            detections: null,
+            filepaths: null,
+            error: null,
+            wizard: true,
+            searching: false,
+            empty: false
+        };
+    },
+    created: function(){
+        var params = new URLSearchParams(window.location.search);
+        const q = params.get("query");
+        const s_type = params.get("search_type");
+
+        if (!!s_type){
+            this.search_type = s_type;
+        }
+
+        if (!!q){
+            this.query = q;
+            this.search();
+        }
     },
     methods: {
         search: function() {
+            'use strict';
+
             this.wizard = false;
             this.empty = false;
             this.searching = true;
@@ -212,7 +247,7 @@ Vue.component("ambience-search", {
 
             var t = this;
             axios.get(
-                api_prefix + "/search/"+this.search_type,
+                api_prefix + "/search",
                 {params: {"q": this.query}}
             ).then(function(response){
                 t.searching = false;
@@ -220,18 +255,17 @@ Vue.component("ambience-search", {
                 if (!!response.data.error) {
                     t.error = response.data.error;
                     t.wizard = true;
-                    return
+                    return;
                 }
 
                 t.error = null;
                 t.detections = response.data.detections;
                 t.filepaths = response.data.filepaths;
-                t.empty = (response.data.count === 0);
 
             }).catch(function(error) {
                 t.searching = false;
                 t.error = "An error occured during the search";
-            })
+            });
         }
     }
 });
@@ -282,9 +316,9 @@ Vue.component("latest-scans", {
         Latest scans
       </div>
       <div class="card-body d-grid gap-1">
-        <div class="input-group" v-for="scan in scans">
+        <div class="input-group input-group-sm" v-for="scan in scans">
           <span class="input-group-text form-control">
-            {{ truncate(scan.name) }}
+            {{ scan.name }}
           </span>
           <a :href="'/scans/'+scan.scan_id" class="btn btn-outline-primary" target="_blank"><i class="fa fa-file-medical-alt"></i></a>
           <a :href="'/project/'+scan.package" class="btn btn-outline-primary" target="_blank" v-if="scan.package"><i class="fa fa-box-open"></i></a>
@@ -292,8 +326,9 @@ Vue.component("latest-scans", {
       </div>
     </div>
     `,
-    props: {
-        scans: {type: Array, default: []}
+    data: function(){
+        'use strict';
+        return {scans: []};
     },
     methods: {
         truncate: function(str, len) {
@@ -317,15 +352,15 @@ Vue.component("latest-scans", {
 Vue.component("ambience-stats", {
     template: `
     <div class="row">
-      <div class="col-md-4 mt-1" v-for="card in cards">
-        <div class="card">
+      <div class="col-lg-6 mt-2" v-for="card in cards">
+        <div class="card shadow">
           <div class="card-body text-center">
-            <h1>
+            <h4>
               <i class="fa fa-circle-o-notch fa-spin fa-fw" v-if="!data"></i>
               <span v-if="!!data">
                 {{ data[card.cid] }}
               </span>
-            </h1>
+            </h4>
           </div>
           <div class="card-footer text-center">
             {{ card.label }}
@@ -335,20 +370,32 @@ Vue.component("ambience-stats", {
     </div>
     `,
     props: {
-        data: {type: Object, default: null},
-        cards: {type: Array, default: [
+        cards: {type: Array, default: function(){return [
                 {cid: "scans", label: "Scans"},
                 {cid: "queue", label: "Scans in a queue"},
                 {cid: "detections", label: "Detections"},
                 {cid: "files", label: "Files scanned"},
                 {cid: "size_human", label: "Data processed"}
-            ]}
+            ]}},
+        stats_interval: {type: Number, default: 60000}
+    },
+    data: function(){
+        'use strict';
+        return {data: null};
     },
     created: function(){
-        var t = this;
-        axios.get("/api/v1.0/stats").then(response => (t.data = response.data));
+        this.load_stats();
+    },
+    methods: {
+        load_stats: function(){
+            var t = this;
+            axios.get("/api/v1.0/stats").then(response => (t.data = response.data));
+            if (this.stats_interval !== null && this.stats_interval > 0){
+                setTimeout(this.load_stats, this.stats_interval);
+            }
+        }
     }
-})
+});
 
 
 Vue.component("suspicious-packages", {
@@ -381,7 +428,8 @@ Vue.component("suspicious-packages", {
       </div>
     </div>
     `,
-    props: {packages: {type: Array, default: null}},
+    //props: {packages: {type: Array, default: null}},
+    data: (() => {return {packages: null}}),
     created: function(){
         var t = this;
         axios.get("/api/v1.0/suspicious_packages").then(response=>(t.packages=response.data));
@@ -611,3 +659,117 @@ Vue.component("package-browser", {
         }
     }
 })
+
+Vue.component("search-bar", {
+    template: `
+    <div class="d-flex">
+        <input class="form-control me-2" type="search" placeholder="Search" v-model="query" v-on:keyup.enter="search">
+    </div>
+    `,
+    methods: {
+        search: function(){
+            'use strict';
+            if (!this.query){
+                window.location.href = "/search";
+            }
+
+            window.location.href = "/search?query=" + encodeURIComponent(this.query);
+        }
+    },
+    data: function(){
+        'use strict'
+        return {query: null}
+    }
+})
+
+
+Vue.component("cron-job-log", {
+    template: `
+    <div class="card">
+      <div class="card-header">
+        Cron job log
+      </div>
+      <div class="card-body">
+        <table class="table table-hover table-bordered table-sm">
+          <thead>
+            <tr>
+              <th>Job ID</th>
+              <th>Run ID</th>
+              <th>Command</th>
+              <th>Status</th>
+              <th>Start time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="l in log" :class='{"table-success": l.status === "succeeded", "table-danger": l.status === "failed", "table-info": l.status === "running"}'>
+              <td>{{ l.jobid }}</td>
+              <td>{{ l.runid }}</td>
+              <td>{{ l.command }}</td>
+              <td>{{ l.status }}</td>
+              <td>{{ l.start_time }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    `,
+    data: function(){
+        'use strict';
+        return {log: null};
+    },
+    created: function(){
+        'use strict';
+        this.refresh_log();
+    },
+    methods: {
+        refresh_log: function(){
+            'use strict';
+            var t = this;
+            axios.get("/api/v1.0/system/cron_log").then(function(response){
+                t.log = response.data;
+            });
+
+            setTimeout(this.refresh_log, 3000);
+        }
+    }
+});
+
+
+Vue.component("running-scans", {
+    template: `
+      <table class="table table-sm table-hover table-bordered table-flex">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>URI</th>
+            <th>Runtime</th>
+            <th>Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="s in scans">
+            <td>{{ s.queue_id }}</td>
+            <td>{{ s.uri }}</td>
+            <td>{{ s.runtime }}</td>
+            <td>{{ s.updated }}</td>
+          </tr>
+        </tbody>
+      </table>
+    `,
+    data: function(){
+        'use strict';
+        return {scans: []};
+    },
+    created: function(){ this.refresh_scans(); },
+    methods: {
+        refresh_scans: function(){
+            'use strict';
+            var t = this;
+            axios.get("/api/v1.0/system/running_scans").then(function(response){
+                t.scans = response.data;
+            });
+
+            setTimeout(this.refresh_scans, 1000);
+        }
+    }
+});

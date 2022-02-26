@@ -155,5 +155,29 @@ def view_package(pkg_name: str, release: str = "latest"):
         for row in cur:
             ctx["release_scores"][row[0]] = row[1]
 
+    stmt = """
+        SELECT
+            package_dists.version,
+            package_dists.filename,
+            package_dists.audit
+        FROM package_dists
+        JOIN packages ON packages.id = package_dists.package_id
+        WHERE
+            package_dists.audit is not NULL AND
+            package_dists.audit != 'unknown' AND
+            packages.name = :pkg_name
+    """
+
+    version_audits = {}
+    filename_audits = {}
+
+    for row in flask.g.db_session.execute(stmt, {"pkg_name": pkg_name}):
+        version_audits.setdefault(row[0], set()).add(row[2])
+
+        if row[0] == release:
+            filename_audits[row[1]] = row[2]
+
+    ctx["version_audits"] = version_audits
+    ctx["filename_audits"] = filename_audits
 
     return flask.render_template("pypi_package.html", **ctx)

@@ -1,0 +1,39 @@
+{% extends "template.html" %}
+
+{% block container %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="card">
+      <div class="card-header">
+        Cron jobs
+      </div>
+      <div class="card-body">
+        <table class="table table-hover table-sm table-bordered">
+          <thead>
+            <tr>
+              <th>Job ID</th>
+              <th>Schedule</th>
+              <th>Command</th>
+              <th>Active</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for j in cron_jobs %}
+            <tr>
+              <td>{{ j.jobid }}</td>
+              <td>{{ j.schedule }}</td>
+              <td>{{ j.command }}</td>
+              <td>{{ j.active }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-12 mt-2">
+    <cron-job-log></cron-job-log>
+  </div>
+</div>
+{% endblock %}

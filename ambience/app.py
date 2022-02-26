@@ -1,4 +1,6 @@
+from __future__ import annotations
 from importlib import resources
+
 from dataclasses import dataclass
 from urllib.parse import urlencode, quote_plus
 import time
@@ -11,7 +13,7 @@ import sqlalchemy as sa
 from aura.config import get_logger
 from aura.output import postgres as sql
 
-from .models import scan, search, pypi, pypi_mirror, sql as sql_models
+from .models import scan, search, pypi, pypi_mirror, sql as sql_models, system, audit
 from .models.graphql.schema import schema as graphql_schema
 from . import api
 from . import auth
@@ -28,6 +30,7 @@ logger = get_logger(__name__)
 engine = sql.get_engine(config.CFG["postgres"])
 db_session = sql.get_session(engine)
 sql.Base.query = db_session.query_property()
+sql_models.Base.query = db_session.query_property()
 
 
 app = flask.Flask(__name__)
@@ -40,6 +43,8 @@ app.register_blueprint(pypi.bp)
 app.register_blueprint(api.bp)
 app.register_blueprint(auth.bp)
 app.register_blueprint(pypi_mirror.bp)
+app.register_blueprint(system.bp)
+app.register_blueprint(audit.bp)
 
 
 @dataclass
@@ -48,10 +53,12 @@ class MenuItem:
     menu_id : str
     text: str
     icon: t.Optional[str] = None
+    subitems: t.Optional[list] = None
+    enabled: t.Callable = lambda : True
 
     @property
     def href(self) -> str:
-        if "/" in self.endpoint:
+        if "/" in self.endpoint or self.endpoint == "#":
             return self.endpoint
         else:
             return flask.url_for(self.endpoint)
@@ -114,10 +121,27 @@ def shutdown_session(exception=None):
 
 MENU_ITEMS = (
     MenuItem(endpoint="/", menu_id="index", text="Home", icon="fa-home"),
-    MenuItem(endpoint="scan.list_scans", menu_id="list_scans", text="Browse scans", icon="fa-list-alt"),
+    MenuItem(endpoint="#", menu_id="auditing", text="Auditing", icon="fa-microscope", subitems=[
+        MenuItem(endpoint="scan.list_scans", menu_id="list_scans", text="Browse scans", icon="fa-file-medical-alt"),
+    ]),
     MenuItem(endpoint="search.search", menu_id="search", text="Search", icon="fa-search"),
-    MenuItem(endpoint="pypi.list_packages", menu_id="list_packages", text="Pypi packages", icon="fa-boxes"),
+    MenuItem(endpoint="pypi.list_packages", menu_id="list_packages", text="Packages", icon="fa-boxes"),
+
+    MenuItem(endpoint="#", menu_id="user_menu", text="User", icon="fa-user",
+             enabled=lambda: flask.g.user is not None,
+             subitems=[
+                MenuItem(endpoint="/system/queue", menu_id="system_queue", text="Queue", icon="fa-running",
+                         enabled=lambda: flask.g.user and flask.g.user.is_admin),
+
+                MenuItem(endpoint="/system/cron", menu_id="system_cron", text="Cron", icon="fa-clock",
+                         enabled=lambda: flask.g.user and flask.g.user.is_admin),
+
+                MenuItem(endpoint="/logout", menu_id="logout", text="Log-out", icon="fa-sign-out-alt"),
+    ]),
+
+    MenuItem(endpoint="/login", menu_id="login", text="Log-in", icon="fa-sign-in-alt", enabled=lambda: flask.g.user is None)
 )
+
 
 def as_uri(base: str, quote: bool=False, **kwargs) -> str:
     uri = base
@@ -138,5 +162,4 @@ def inject_data():
         "debug": app.debug,
         "as_uri": as_uri
     }
-
 

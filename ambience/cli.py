@@ -29,5 +29,13 @@ def add_user():
     session.commit()
 
 
+@cli.command()
+def server_worker():
+    from aura.server import worker
+
+    sw = worker.ServerWorker(config.CFG["postgres"])
+    sw.loop()
+
+
 if __name__ == "__main__":
     cli()
